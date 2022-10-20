@@ -104,6 +104,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 	retval = WSAConnect(s_sock, (sockaddr*)&serveraddr, sizeof(serveraddr),0,0,0,0);
 	if (retval == SOCKET_ERROR) err_quit(TEXT("WSAConnect()"));
 	do_recv_message();
+	
 	do_send_message(-1);
 	// 메세지 루프
 	while (true) {
@@ -113,7 +114,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmd
 			TranslateMessage(&Message); // 키보드에 입력된 메세지를 인스턴스가 이해하기 쉬운 형태로 해석
 			DispatchMessage(&Message); // WndProc으로 해석시킨 메세지를 전달한다.
 		}
-		
+		InvalidateRect(g_hWnd, NULL, FALSE);
 	}
 
 	// 소켓 닫기

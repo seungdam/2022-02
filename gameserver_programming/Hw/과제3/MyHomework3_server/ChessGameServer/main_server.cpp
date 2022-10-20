@@ -37,16 +37,17 @@ class EXP_OVER {
 public:
 	WSAOVERLAPPED m_over;
 	int m_id;
+	int m_pos_id;
 	WSABUF	m_wsa[1];
 	char  m_buff[BUFSIZE];
-	EXP_OVER(int client_id) : m_id(client_id)
+	EXP_OVER(int client_id, int pos_id) : m_id(client_id), m_pos_id(pos_id)
 	{
 		m_wsa[0].len = 3;
 		m_wsa->buf = m_buff;
-		m_buff[0] = m_id;
+		m_buff[0] = m_pos_id;
 		printf("%d\n",m_id);
-		m_buff[1] = cinfo[m_id - 1].x;
-		m_buff[2] = cinfo[m_id - 1].y;
+		m_buff[1] = cinfo[m_pos_id - 1].x;
+		m_buff[2] = cinfo[m_pos_id - 1].y;
 		
 		ZeroMemory(&m_over, sizeof(m_over));
 		m_over.hEvent = (HANDLE)m_id;
@@ -92,9 +93,9 @@ public:
 		}
 
 	}
-	void do_send()
+	void do_send(int pos_id)
 	{
-		EXP_OVER* o = new EXP_OVER(m_id);
+		EXP_OVER* o = new EXP_OVER(m_id, pos_id);
 		int retval = WSASend(client, o->m_wsa, 1, 0, 0, &o->m_over, send_callback);
 		if (retval == SOCKET_ERROR) {
 			if (WSAGetLastError() != WSA_IO_PENDING) {
@@ -111,21 +112,21 @@ void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DW
 	int client_id = reinterpret_cast<int>(over->hEvent);
 	int key = clients[client_id].c_mess[0]; // 클라에서 입력된 키보드 키 값
 	if (key == VK_UP) {
-		if (cinfo[client_id].y > 1) cinfo[client_id].y -= 1;
+		if (cinfo[client_id - 1].y > 1) cinfo[client_id - 1].y -= 1;
 	}
 	if (key == VK_DOWN) {
-		if (cinfo[client_id].y <= 7) cinfo[client_id].y += 1;
+		if (cinfo[client_id - 1].y <= 7) cinfo[client_id - 1].y += 1;
 	}
 	if (key == VK_RIGHT) {
-		if (cinfo[client_id].x <= 7) cinfo[client_id].x += 1;
+		if (cinfo[client_id - 1].x <= 7) cinfo[client_id - 1].x += 1;
 	}
 	if (key == VK_LEFT) {
-		if (cinfo[client_id].x > 1) cinfo[client_id].x -= 1;
+		if (cinfo[client_id - 1].x > 1) cinfo[client_id - 1].x -= 1;
 	}
 
 	// 다른 클라이언트에게 모두 전송
 	for (auto& cl : clients) {
-		cl.second.do_send();
+		cl.second.do_send(client_id);
 	}
 	clients[client_id].do_recv();
 }
@@ -133,7 +134,6 @@ void CALLBACK recv_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DW
 
 void CALLBACK send_callback(DWORD err, DWORD num_bytes, LPWSAOVERLAPPED over, DWORD flags)
 {
-	
 	delete over;
 }
 
